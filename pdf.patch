@@ -38,6 +38,7 @@ diff --color -urN app/vendor/dompdf/dompdf/src/Image/Cache.php app_bak/vendor/do
 +//        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = \Drupal\Component\Utility\Timer::read('PDF');
 +        $end = \Drupal\Component\Utility\Timer::read('PDF');
 +        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['TotalDownloadImageElapseTime'] += ($end - $start);
+        
          return [$resolved_url, $type, $message];
      }
  
