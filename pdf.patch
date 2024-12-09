@@ -1,0 +1,153 @@
+diff --color -urN app/vendor/dompdf/dompdf/lib/Cpdf.php app_bak/vendor/dompdf/dompdf/lib/Cpdf.php
+--- app/vendor/dompdf/dompdf/lib/Cpdf.php	2024-12-09 13:07:09.731130805 +0800
++++ app_bak/vendor/dompdf/dompdf/lib/Cpdf.php	2024-12-09 13:21:41.758951170 +0800
+@@ -5636,6 +5636,7 @@
+      */
+     protected function addImagePngAlpha($file, $x, $y, $w, $h, $byte)
+     {
++        $start = \Drupal\Component\Utility\Timer::read('PDF');
+         // generate images
+         $img = @imagecreatefrompng($file);
+ 
+@@ -5816,6 +5817,8 @@
+         $this->addImagePng($imgplain, $tempfile_plain, $x, $y, $w, $h, false, ($tempfile_alpha !== null));
+         imagedestroy($imgplain);
+         $this->imageCache[] = $tempfile_plain;
++        $end = \Drupal\Component\Utility\Timer::read('PDF');
++        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['TotalAddImagePngAlphaElapseTime'] += ($end-$start);
+     }
+ 
+     /**
+diff --color -urN app/vendor/dompdf/dompdf/src/Image/Cache.php app_bak/vendor/dompdf/dompdf/src/Image/Cache.php
+--- app/vendor/dompdf/dompdf/src/Image/Cache.php	2024-12-09 13:07:09.771130880 +0800
++++ app_bak/vendor/dompdf/dompdf/src/Image/Cache.php	2024-12-09 13:21:41.758951170 +0800
+@@ -62,6 +62,9 @@
+      */
+     static function resolve_url($url, $protocol, $host, $base_path, Options $options)
+     {
++//        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = $url;
++//        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = \Drupal\Component\Utility\Timer::read('PDF');
++        $start = \Drupal\Component\Utility\Timer::read('PDF');
+         $tempfile = null;
+         $resolved_url = null;
+         $type = null;
+@@ -190,6 +193,9 @@
+             Helpers::record_warnings($e->getCode(), $e->getMessage() . " \n $url", $e->getFile(), $e->getLine());
+             self::$_cache[$full_url] = $resolved_url;
+         }
++//        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = \Drupal\Component\Utility\Timer::read('PDF');
++        $end = \Drupal\Component\Utility\Timer::read('PDF');
++        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['TotalDownloadImageElapseTime'] += ($end - $start);
+         return [$resolved_url, $type, $message];
+     }
+ 
+diff --color -urN app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php app_bak/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php
+--- app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-09 13:07:11.671134242 +0800
++++ app_bak/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-09 13:21:41.768951238 +0800
+@@ -14,6 +14,7 @@
+  */
+ class PdfExportController extends ControllerBase {
+ 
++  public static $timer = [];
+   const PDP_WINDSHIELD = "0";
+   const PDP_CUSTOMER = "1";
+   const PDP_VENDOR = "2";
+@@ -27,6 +28,7 @@
+    * Generating the pdf file to download.
+    */
+   public function getPdfTemplate() {
++    \Drupal\Component\Utility\Timer::start('PDF');
+     $query = \Drupal::request()->query->all();
+ 
+     $pdfTemplate = '';
+@@ -102,8 +104,8 @@
+     }
+     if (!empty($htmlElement)) {
+       $html = \Drupal::service('renderer')->render($htmlElement);
+-      $pdfExportUtility->convertHtmltoPdf($html, $name, $paper_size,
+-        $orientation);
++      \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['html_generated'] =  \Drupal\Component\Utility\Timer::read('PDF');
++      $pdfExportUtility->convertHtmltoPdf($html, $name, $paper_size, $orientation);
+       return [];
+     }
+     else {
+diff --color -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php app_bak/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php
+--- app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-09 13:07:21.141148839 +0800
++++ app_bak/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-09 13:21:41.768951238 +0800
+@@ -4,6 +4,7 @@
+ 
+ use Dompdf\Dompdf;
+ use Dompdf\Options;
++use Drupal\Core\Database\Transaction;
+ use Drupal\Core\Url;
+ use Drupal\node\Entity\Node;
+ use Drupal\taxonomy\Entity\Term;
+@@ -14,6 +15,7 @@
+ use Drupal\utwp_pdf_export\Controller\PdfExportController;
+ use Drupal\utwp_customer\Helper\BlockProfile;
+ use Drupal\Core\Cache\Cache;
++use Symfony\Component\VarDumper\VarDumper;
+ 
+ /**
+  * Class PdfExportUtility.
+@@ -195,6 +197,9 @@
+       }
+       $config = \Drupal::config('utwp.config');
+       $copyright = $config->get('copyright');
++      //$vehicleHtml = preg_replace('/<!--.+-->\\n/U', '', $vehicleHtml);
++      //$vehicleHtml = preg_replace('/<img.+>\\n/U', '', $vehicleHtml);
++      //echo($vehicleHtml);
+       $htmlElement = [
+         '#theme' => $pdfTemplate,
+         '#vehicle' => $vehicleHtml,
+@@ -291,6 +296,7 @@
+     $paper_size,
+     $orientation
+   ) {
++    \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['startConvertHtmltoPdf'] = \Drupal\Component\Utility\Timer::read('PDF');
+     $themeHandler = \Drupal::service('theme_handler');
+     $themePath = $themeHandler->getTheme($themeHandler->getDefault())->getPath();
+     $options = new Options();
+@@ -306,9 +312,16 @@
+     $options->setIsHtml5ParserEnabled(TRUE);
+     $dompdf = new Dompdf($options);
+     $dompdf->loadHtml($html);
++    \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterLoadHtml'] = \Drupal\Component\Utility\Timer::read('PDF');
+     $dompdf->setPaper($paper_size, $orientation);
+     $dompdf->render();
++    \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterRender'] = \Drupal\Component\Utility\Timer::read('PDF');
++    //file_put_contents('/tmp/' . time() . '.pdf', $dompdf->output());
+     $dompdf->stream($name, ["Attachment" => FALSE]);
++    \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['end'] = \Drupal\Component\Utility\Timer::read('PDF');
++    ob_start();
++    VarDumper::dump(\Drupal\utwp_pdf_export\Controller\PdfExportController::$timer);
++    file_put_contents(\Drupal::root() . '/pdf-gen-report.html' ,ob_get_clean() . "<xmp>" . $html . "</xmp>");
+     exit();
+   }
+ 
+diff --color -urN app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig app_bak/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig
+--- app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-09 13:07:17.501143074 +0800
++++ app_bak/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-09 13:21:41.768951238 +0800
+@@ -7,8 +7,8 @@
+ <header>
+     <div class="wrap-header">
+         <div class="header-left">
+-            <img src="./{{ directory }}/assets/img/logo.png" alt="Renault Trucks" height="50">
+-            <img class="utwp-logo" src="./{{ directory }}/assets/img/utwp-pdf.png" alt="Used Trucks by Renault Trucks"
++            <img src="./{{ directory }}/assets/img/logo_50.png" alt="Renault Trucks" height="50">
++            <img class="utwp-logo" src="./{{ directory }}/assets/img/utwp-pdf_60.png" alt="Used Trucks by Renault Trucks"
+                  height="60">
+         </div>
+         <div class="header-right">
+@@ -56,7 +56,7 @@
+         </p>
+     </div>
+     <div class="footer-right">
+-        <img class="utwp-logo-footer" src="./{{ directory }}/assets/img/utwp-pdf.png" alt="Used Trucks by Renault Trucks"
++        <img class="utwp-logo-footer" src="./{{ directory }}/assets/img/utwp-pdf_40.png" alt="Used Trucks by Renault Trucks"
+              height="40">
+         <p class="copyright"> copyright &copy; {{ copyright }} </p>
+     </div>
+Binary files app/web/themes/custom/utwp/assets/img/logo_50.png and app_bak/web/themes/custom/utwp/assets/img/logo_50.png differ
+Binary files app/web/themes/custom/utwp/assets/img/utwp-pdf_40.png and app_bak/web/themes/custom/utwp/assets/img/utwp-pdf_40.png differ
+Binary files app/web/themes/custom/utwp/assets/img/utwp-pdf_60.png and app_bak/web/themes/custom/utwp/assets/img/utwp-pdf_60.png differ
