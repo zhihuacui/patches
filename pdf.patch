@@ -44,7 +44,7 @@ diff -urN app/vendor/dompdf/dompdf/lib/Cpdf.php new/vendor/dompdf/dompdf/lib/Cpd
      /**
 diff -urN app/vendor/dompdf/dompdf/src/Dompdf.php new/vendor/dompdf/dompdf/src/Dompdf.php
 --- app/vendor/dompdf/dompdf/src/Dompdf.php	2024-04-29 07:01:28.000000000 +0000
-+++ new/vendor/dompdf/dompdf/src/Dompdf.php	2024-12-10 05:13:04.003358305 +0000
++++ new/vendor/dompdf/dompdf/src/Dompdf.php	2024-12-10 06:08:55.761552347 +0000
 @@ -729,7 +729,7 @@
          }
  
@@ -67,7 +67,7 @@ diff -urN app/vendor/dompdf/dompdf/src/Dompdf.php new/vendor/dompdf/dompdf/src/D
              $this->setPaper([0, 0, $width, $height]);
          }
 +        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterApplyStyles'] = \Drupal\Component\Utility\Timer::read('PDF');
-+        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['TotalApplyCssElapseTime'] = \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterApplyStyles'] - \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterProcessHtml'] = \Drupal\Component\Utility\Timer::read('PDF');
++        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['TotalApplyCssElapseTime'] = \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterApplyStyles'] - \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterProcessHtml'];
  
          // Create a new canvas instance if the current one does not match the
          // desired paper size
@@ -163,7 +163,7 @@ diff -urN app/vendor/dompdf/dompdf/src/Image/Cache.php new/vendor/dompdf/dompdf/
      }
  
 diff -urN app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php new/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php
---- app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-10 05:56:08.032849973 +0000
+--- app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-10 06:09:20.701675414 +0000
 +++ new/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-10 05:33:11.004836187 +0000
 @@ -14,6 +14,7 @@
   */
@@ -198,7 +198,7 @@ diff -urN app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportControl
      }
      else {
 diff -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php new/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php
---- app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-10 05:56:08.032849973 +0000
+--- app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-10 06:09:20.701675414 +0000
 +++ new/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-10 05:54:54.711621467 +0000
 @@ -15,6 +15,7 @@
  use Drupal\utwp_dao\Country\CountryDao;
@@ -278,7 +278,7 @@ diff -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.ph
    }
  
 diff -urN app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig new/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig
---- app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-10 05:56:08.032849973 +0000
+--- app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-10 06:09:20.701675414 +0000
 +++ new/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-10 02:32:32.841566788 +0000
 @@ -7,8 +7,8 @@
  <header>
