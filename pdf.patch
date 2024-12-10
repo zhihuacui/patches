@@ -1,6 +1,6 @@
-diff --color -urN app/vendor/dompdf/dompdf/lib/Cpdf.php app_bak/vendor/dompdf/dompdf/lib/Cpdf.php
---- app/vendor/dompdf/dompdf/lib/Cpdf.php	2024-12-09 13:07:09.731130805 +0800
-+++ app_bak/vendor/dompdf/dompdf/lib/Cpdf.php	2024-12-09 13:21:41.758951170 +0800
+diff -urN app/vendor/dompdf/dompdf/lib/Cpdf.php app_new/vendor/dompdf/dompdf/lib/Cpdf.php
+--- app/vendor/dompdf/dompdf/lib/Cpdf.php	2024-04-29 07:01:28.000000000 +0000
++++ app_new/vendor/dompdf/dompdf/lib/Cpdf.php	2024-12-10 01:56:19.461478202 +0000
 @@ -5636,6 +5636,7 @@
       */
      protected function addImagePngAlpha($file, $x, $y, $w, $h, $byte)
@@ -18,32 +18,75 @@ diff --color -urN app/vendor/dompdf/dompdf/lib/Cpdf.php app_bak/vendor/dompdf/do
      }
  
      /**
-diff --color -urN app/vendor/dompdf/dompdf/src/Image/Cache.php app_bak/vendor/dompdf/dompdf/src/Image/Cache.php
---- app/vendor/dompdf/dompdf/src/Image/Cache.php	2024-12-09 13:07:09.771130880 +0800
-+++ app_bak/vendor/dompdf/dompdf/src/Image/Cache.php	2024-12-09 13:21:41.758951170 +0800
-@@ -62,6 +62,9 @@
+diff -urN app/vendor/dompdf/dompdf/src/Image/Cache.php app_new/vendor/dompdf/dompdf/src/Image/Cache.php
+--- app/vendor/dompdf/dompdf/src/Image/Cache.php	2024-04-29 07:01:28.000000000 +0000
++++ app_new/vendor/dompdf/dompdf/src/Image/Cache.php	2024-12-10 01:56:19.491479010 +0000
+@@ -47,7 +47,7 @@
+     public static $broken_image = "data:image/svg+xml;charset=utf8,%3C?xml version='1.0'?%3E%3Csvg width='64' height='64' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect stroke='%23666666' id='svg_1' height='60.499994' width='60.166667' y='1.666669' x='1.999998' stroke-width='1.5' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_3' y2='59.333253' x2='59.749916' y1='4.333415' x1='4.250079' stroke-width='1.5' stroke='%23999999' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_4' y2='59.999665' x2='4.062838' y1='3.750342' x1='60.062164' stroke-width='1.5' stroke='%23999999' fill='none'/%3E%3C/g%3E%3C/svg%3E";
+ 
+     public static $error_message = "Image not found or type unknown";
+-    
++
+     /**
+      * Resolve and fetch an image for use.
+      *
+@@ -62,11 +62,14 @@
       */
      static function resolve_url($url, $protocol, $host, $base_path, Options $options)
      {
-+//        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = $url;
-+//        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = \Drupal\Component\Utility\Timer::read('PDF');
++        //\Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = $url;
++        //\Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = \Drupal\Component\Utility\Timer::read('PDF');
 +        $start = \Drupal\Component\Utility\Timer::read('PDF');
          $tempfile = null;
          $resolved_url = null;
          $type = null;
-@@ -190,6 +193,9 @@
+         $message = null;
+-        
++
+         try {
+             $full_url = Helpers::build_url($protocol, $host, $base_path, $url);
+ 
+@@ -77,7 +80,7 @@
+             $parsed_url = Helpers::explode_url($full_url);
+             $protocol = strtolower($parsed_url["protocol"]);
+             $is_data_uri = strpos($protocol, "data:") === 0;
+-            
++
+             if (!$is_data_uri) {
+                 $allowed_protocols = $options->getAllowedProtocols();
+                 if (!array_key_exists($protocol, $allowed_protocols)) {
+@@ -158,7 +161,7 @@
+                                 if (empty($inner_full_url)) {
+                                     continue;
+                                 }
+-                                
++
+                                 self::detectCircularRef($full_url, $inner_full_url);
+                                 self::$svgRefs[$full_url][] = $inner_full_url;
+                                 [$resolved_url, $type, $message] = self::resolve_url($url, $parsed_url["protocol"], $parsed_url["host"], $parsed_url["path"], $options);
+@@ -170,7 +173,7 @@
+                     },
+                     false
+                 );
+-        
++
+                 if (($fp = fopen($resolved_url, "r")) !== false) {
+                     while ($line = fread($fp, 8192)) {
+                         xml_parse($parser, $line, false);
+@@ -190,7 +193,9 @@
              Helpers::record_warnings($e->getCode(), $e->getMessage() . " \n $url", $e->getFile(), $e->getLine());
              self::$_cache[$full_url] = $resolved_url;
          }
-+//        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = \Drupal\Component\Utility\Timer::read('PDF');
+-
++        //\Drupal\utwp_pdf_export\Controller\PdfExportController::$timer[] = \Drupal\Component\Utility\Timer::read('PDF');
 +        $end = \Drupal\Component\Utility\Timer::read('PDF');
 +        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['TotalDownloadImageElapseTime'] += ($end - $start);
          return [$resolved_url, $type, $message];
      }
  
-diff --color -urN app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php app_bak/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php
---- app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-09 13:07:11.671134242 +0800
-+++ app_bak/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-09 13:21:41.768951238 +0800
+diff -urN app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php app_new/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php
+--- app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-10 01:57:02.532637295 +0000
++++ app_new/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-10 01:56:20.571508164 +0000
 @@ -14,6 +14,7 @@
   */
  class PdfExportController extends ControllerBase {
@@ -71,26 +114,18 @@ diff --color -urN app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExpor
        return [];
      }
      else {
-diff --color -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php app_bak/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php
---- app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-09 13:07:21.141148839 +0800
-+++ app_bak/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-09 13:21:41.768951238 +0800
-@@ -4,6 +4,7 @@
- 
- use Dompdf\Dompdf;
- use Dompdf\Options;
-+use Drupal\Core\Database\Transaction;
- use Drupal\Core\Url;
- use Drupal\node\Entity\Node;
- use Drupal\taxonomy\Entity\Term;
-@@ -14,6 +15,7 @@
+diff -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php app_new/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php
+--- app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-10 01:57:02.532637295 +0000
++++ app_new/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-10 01:56:20.571508164 +0000
+@@ -15,6 +15,7 @@
+ use Drupal\utwp_dao\Country\CountryDao;
+ use Drupal\utwp_multicountry\DomainUtwpUtility;
  use Drupal\utwp_pdf_export\Controller\PdfExportController;
- use Drupal\utwp_customer\Helper\BlockProfile;
- use Drupal\Core\Cache\Cache;
 +use Symfony\Component\VarDumper\VarDumper;
  
  /**
   * Class PdfExportUtility.
-@@ -195,6 +197,9 @@
+@@ -196,6 +197,9 @@
        }
        $config = \Drupal::config('utwp.config');
        $copyright = $config->get('copyright');
@@ -100,15 +135,15 @@ diff --color -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUt
        $htmlElement = [
          '#theme' => $pdfTemplate,
          '#vehicle' => $vehicleHtml,
-@@ -291,6 +296,7 @@
+@@ -292,6 +296,7 @@
      $paper_size,
      $orientation
    ) {
 +    \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['startConvertHtmltoPdf'] = \Drupal\Component\Utility\Timer::read('PDF');
      $themeHandler = \Drupal::service('theme_handler');
-     $themePath = $themeHandler->getTheme($themeHandler->getDefault())->getPath();
-     $options = new Options();
-@@ -306,9 +312,16 @@
+     $chrootPaths = [
+       $themeHandler->getTheme($themeHandler->getDefault())->getPath(),
+@@ -313,9 +318,16 @@
      $options->setIsHtml5ParserEnabled(TRUE);
      $dompdf = new Dompdf($options);
      $dompdf->loadHtml($html);
@@ -121,13 +156,13 @@ diff --color -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUt
 +    \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['end'] = \Drupal\Component\Utility\Timer::read('PDF');
 +    ob_start();
 +    VarDumper::dump(\Drupal\utwp_pdf_export\Controller\PdfExportController::$timer);
-+    file_put_contents(\Drupal::root() . '/pdf-gen-report.html' ,ob_get_clean() . "<xmp>" . $html . "</xmp>");
++    file_put_contents(\Drupal::root() . '/sites/default/files/pdf-gen-report.html' ,ob_get_clean() . "<details><xmp>" . $html . "</xmp></details>");
      exit();
    }
  
-diff --color -urN app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig app_bak/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig
---- app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-09 13:07:17.501143074 +0800
-+++ app_bak/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-09 13:21:41.768951238 +0800
+diff -urN app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig app_new/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig
+--- app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-10 01:56:57.342497947 +0000
++++ app_new/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-10 01:56:20.571508164 +0000
 @@ -7,8 +7,8 @@
  <header>
      <div class="wrap-header">
@@ -148,6 +183,3 @@ diff --color -urN app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.
               height="40">
          <p class="copyright"> copyright &copy; {{ copyright }} </p>
      </div>
-Binary files app/web/themes/custom/utwp/assets/img/logo_50.png and app_bak/web/themes/custom/utwp/assets/img/logo_50.png differ
-Binary files app/web/themes/custom/utwp/assets/img/utwp-pdf_40.png and app_bak/web/themes/custom/utwp/assets/img/utwp-pdf_40.png differ
-Binary files app/web/themes/custom/utwp/assets/img/utwp-pdf_60.png and app_bak/web/themes/custom/utwp/assets/img/utwp-pdf_60.png differ
