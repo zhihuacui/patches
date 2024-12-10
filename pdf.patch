@@ -1,6 +1,6 @@
-diff -urN app/vendor/dompdf/dompdf/lib/Cpdf.php app_new/vendor/dompdf/dompdf/lib/Cpdf.php
+diff -urN app/vendor/dompdf/dompdf/lib/Cpdf.php new/vendor/dompdf/dompdf/lib/Cpdf.php
 --- app/vendor/dompdf/dompdf/lib/Cpdf.php	2024-04-29 07:01:28.000000000 +0000
-+++ app_new/vendor/dompdf/dompdf/lib/Cpdf.php	2024-12-10 01:56:19.461478202 +0000
++++ new/vendor/dompdf/dompdf/lib/Cpdf.php	2024-12-10 02:32:32.681563626 +0000
 @@ -5636,6 +5636,7 @@
       */
      protected function addImagePngAlpha($file, $x, $y, $w, $h, $byte)
@@ -18,9 +18,55 @@ diff -urN app/vendor/dompdf/dompdf/lib/Cpdf.php app_new/vendor/dompdf/dompdf/lib
      }
  
      /**
-diff -urN app/vendor/dompdf/dompdf/src/Image/Cache.php app_new/vendor/dompdf/dompdf/src/Image/Cache.php
+diff -urN app/vendor/dompdf/dompdf/src/Dompdf.php new/vendor/dompdf/dompdf/src/Dompdf.php
+--- app/vendor/dompdf/dompdf/src/Dompdf.php	2024-04-29 07:01:28.000000000 +0000
++++ new/vendor/dompdf/dompdf/src/Dompdf.php	2024-12-10 02:32:32.681563626 +0000
+@@ -729,7 +729,7 @@
+         }
+ 
+         $this->processHtml();
+-
++        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterProcessHtml'] = \Drupal\Component\Utility\Timer::read('PDF');
+         $this->css->apply_styles($this->tree);
+ 
+         // @page style rules : size, margins
+@@ -740,7 +740,7 @@
+         foreach ($pageStyles as $pageStyle) {
+             $pageStyle->inherit($basePageStyle);
+         }
+-
++        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterApplyStyles'] = \Drupal\Component\Utility\Timer::read('PDF');
+         // Set paper size if defined via CSS
+         if (is_array($basePageStyle->size)) {
+             // Orientation is already applied when reading the computed CSS
+@@ -773,7 +773,7 @@
+             }
+             Factory::decorate_frame($frame, $this, $root);
+         }
+-
++        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterDecorateFrame'] = \Drupal\Component\Utility\Timer::read('PDF');
+         // Add meta information
+         $title = $this->dom->getElementsByTagName("title");
+         if ($title->length) {
+@@ -800,13 +800,13 @@
+                 $canvas->set_default_view($this->defaultView, $this->defaultViewOptions);
+             }
+         }
+-
++        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterAddMeteData'] = \Drupal\Component\Utility\Timer::read('PDF');
+         $root->set_containing_block(0, 0, $canvas->get_width(), $canvas->get_height());
+         $root->set_renderer(new Renderer($this));
+ 
+         // This is where the magic happens:
+         $root->reflow();
+-
++        \Drupal\utwp_pdf_export\Controller\PdfExportController::$timer['AfterComposePage'] = \Drupal\Component\Utility\Timer::read('PDF');
+         if (isset($this->callbacks["end_document"])) {
+             $fs = $this->callbacks["end_document"];
+ 
+diff -urN app/vendor/dompdf/dompdf/src/Image/Cache.php new/vendor/dompdf/dompdf/src/Image/Cache.php
 --- app/vendor/dompdf/dompdf/src/Image/Cache.php	2024-04-29 07:01:28.000000000 +0000
-+++ app_new/vendor/dompdf/dompdf/src/Image/Cache.php	2024-12-10 01:56:19.491479010 +0000
++++ new/vendor/dompdf/dompdf/src/Image/Cache.php	2024-12-10 02:32:32.681563626 +0000
 @@ -47,7 +47,7 @@
      public static $broken_image = "data:image/svg+xml;charset=utf8,%3C?xml version='1.0'?%3E%3Csvg width='64' height='64' xmlns='http://www.w3.org/2000/svg'%3E%3Cg%3E%3Crect stroke='%23666666' id='svg_1' height='60.499994' width='60.166667' y='1.666669' x='1.999998' stroke-width='1.5' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_3' y2='59.333253' x2='59.749916' y1='4.333415' x1='4.250079' stroke-width='1.5' stroke='%23999999' fill='none'/%3E%3Cline stroke-linecap='null' stroke-linejoin='null' id='svg_4' y2='59.999665' x2='4.062838' y1='3.750342' x1='60.062164' stroke-width='1.5' stroke='%23999999' fill='none'/%3E%3C/g%3E%3C/svg%3E";
  
@@ -84,9 +130,9 @@ diff -urN app/vendor/dompdf/dompdf/src/Image/Cache.php app_new/vendor/dompdf/dom
          return [$resolved_url, $type, $message];
      }
  
-diff -urN app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php app_new/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php
---- app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-10 01:57:02.532637295 +0000
-+++ app_new/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-10 01:56:20.571508164 +0000
+diff -urN app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php new/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php
+--- app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-10 02:33:15.802414448 +0000
++++ new/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportController.php	2024-12-10 02:32:32.841566788 +0000
 @@ -14,6 +14,7 @@
   */
  class PdfExportController extends ControllerBase {
@@ -114,9 +160,9 @@ diff -urN app/web/modules/custom/utwp_pdf_export/src/Controller/PdfExportControl
        return [];
      }
      else {
-diff -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php app_new/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php
---- app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-10 01:57:02.532637295 +0000
-+++ app_new/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-10 01:56:20.571508164 +0000
+diff -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php new/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php
+--- app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-10 02:33:15.802414448 +0000
++++ new/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.php	2024-12-10 02:32:32.841566788 +0000
 @@ -15,6 +15,7 @@
  use Drupal\utwp_dao\Country\CountryDao;
  use Drupal\utwp_multicountry\DomainUtwpUtility;
@@ -160,9 +206,9 @@ diff -urN app/web/modules/custom/utwp_pdf_export/src/Utility/PdfExportUtility.ph
      exit();
    }
  
-diff -urN app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig app_new/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig
---- app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-10 01:56:57.342497947 +0000
-+++ app_new/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-10 01:56:20.571508164 +0000
+diff -urN app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig new/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig
+--- app/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-10 02:33:15.802414448 +0000
++++ new/web/modules/custom/utwp_pdf_export/templates/pdp_customer.html.twig	2024-12-10 02:32:32.841566788 +0000
 @@ -7,8 +7,8 @@
  <header>
      <div class="wrap-header">
